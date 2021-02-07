@@ -22,22 +22,30 @@ main = C.withSDL $ C.withSDLImage $ do
   C.setHintQuality
   C.withWindow "Test SDL" (640, 480) $ \w ->
     C.withRenderer w $ \r -> do
-      appLoop r
+      worldRef <- newIORef (World (V2 10 10))
+      appLoop r worldRef
 
-appLoop :: SDL.Renderer -> IO ()
-appLoop renderer = do
+appLoop :: SDL.Renderer -> IORef World -> IO ()
+appLoop renderer worldRef = do
   events <- SDL.pollEvents
+
+  world <- readIORef worldRef
+
   let qPressed = any eventIsQPress events
 
       doRender :: World -> IO ()
       doRender = render renderer
 
-  doRender $ foldr updateWorld initialWorld events
+      world' = updateWorld events world
 
-  unless qPressed (appLoop renderer)
+  doRender world'
 
-updateWorld :: SDL.Event -> World -> World
-updateWorld _ world = World { object = object world + 10 }
+  writeIORef worldRef world'
+
+  unless qPressed (appLoop renderer worldRef)
+
+updateWorld :: [SDL.Event] -> World -> World
+updateWorld _ world = World { object = object world + 1 }
 
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
