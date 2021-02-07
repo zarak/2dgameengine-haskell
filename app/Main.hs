@@ -42,35 +42,26 @@ main = C.withSDL $ C.withSDLImage $ do
 appLoop :: SDL.Renderer -> IORef World -> IO ()
 appLoop renderer worldRef = do
   events <- SDL.pollEvents
-
   world <- readIORef worldRef
-
   t <- SDLTimer.getTicks
 
   let timeToWait = frameTargetTime - fromIntegral (t - ticksLastFrame world)
-
       qPressed = any eventIsQPress events
-
-      doRender :: World -> IO ()
-      doRender = render renderer
-
-
       timeToWait' = if timeToWait > 0 && timeToWait < frameTargetTime
          then timeToWait
          else 0
 
-  SDL.delay $ floor timeToWait'
+      doRender :: World -> IO ()
+      doRender = render renderer
 
+  SDL.delay $ floor timeToWait'
   t' <- SDLTimer.getTicks
 
   let world' = updateWorld events world t'
 
   print world'
-
   doRender world'
-
   writeIORef worldRef world'
-
   unless qPressed (appLoop renderer worldRef)
 
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
