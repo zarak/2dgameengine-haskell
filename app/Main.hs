@@ -27,17 +27,16 @@ appLoop :: SDL.Renderer -> IO ()
 appLoop renderer = do
   events <- SDL.pollEvents
   let qPressed = any eventIsQPress events
+
       doRender :: World -> IO ()
       doRender = render renderer
 
   doRender $ foldr updateWorld initialWorld events
-  -- render renderer initialWorld
 
   unless qPressed (appLoop renderer)
 
 updateWorld :: SDL.Event -> World -> World
 updateWorld _ world = World { object = object world + 1 }
--- updateWorld _ = id
 
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
@@ -66,6 +65,3 @@ render renderer world = do
 
 rectangleSize :: V2 CInt
 rectangleSize = V2 20 20
-
-rectanglePosition :: V2 CInt
-rectanglePosition = V2 10 10
