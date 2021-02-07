@@ -4,10 +4,11 @@ module Main where
 import qualified Common                 as C
 import qualified SDL
 
+import           Control.Monad          (unless)
 import           Control.Monad.IO.Class (MonadIO)
+import           Data.IORef
+import           Foreign.C.Types        (CInt)
 import           Linear
-import Control.Monad (unless)
-import Foreign.C.Types (CInt)
 
 newtype World = World
   { object :: V2 CInt
@@ -36,7 +37,7 @@ appLoop renderer = do
   unless qPressed (appLoop renderer)
 
 updateWorld :: SDL.Event -> World -> World
-updateWorld _ world = World { object = object world + 1 }
+updateWorld _ world = World { object = object world + 10 }
 
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
