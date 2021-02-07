@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:2dgameengine-haskell"
+
+    - path: "app/Main.hs"
+      component: "2dgameengine-haskell:exe:2dgameengine-haskell"
+
+    - path: "test"
+      component: "2dgameengine-haskell:test:2dgameengine-haskell-test"
