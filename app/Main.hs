@@ -15,7 +15,7 @@ import Data.Word (Word32)
 data World = World
   { player :: V2 CInt
   , ticksLastFrame :: Word32
-  }
+  } deriving Show
 
 rectangleSize :: V2 CInt
 rectangleSize = V2 20 20
@@ -47,7 +47,7 @@ appLoop renderer worldRef = do
 
   t <- SDLTimer.getTicks
 
-  let timeToWait = floor frameTargetTime - (t - ticksLastFrame world)
+  let timeToWait = frameTargetTime - fromIntegral (t - ticksLastFrame world)
 
       qPressed = any eventIsQPress events
 
@@ -55,15 +55,17 @@ appLoop renderer worldRef = do
       doRender = render renderer
 
 
-      timeToWait' = if timeToWait > 0 && timeToWait < floor frameTargetTime
+      timeToWait' = if timeToWait > 0 && timeToWait < frameTargetTime
          then timeToWait
          else 0
 
-  SDL.delay timeToWait'
+  SDL.delay $ floor timeToWait'
 
   t' <- SDLTimer.getTicks
-  let deltaTime = (t' - ticksLastFrame world) `div` 1000
-      world' = updateWorld events world deltaTime
+
+  let world' = updateWorld events world t'
+
+  print world'
 
   doRender world'
 
@@ -72,9 +74,13 @@ appLoop renderer worldRef = do
   unless qPressed (appLoop renderer worldRef)
 
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
-updateWorld _ world dT = World { player = player world + 1
-                            , ticksLastFrame = ticksLastFrame world 
-                            }
+updateWorld _ world t =
+  let deltaTime = fromIntegral (t - ticksLastFrame world) / 1000
+      step = V2 (floor $ deltaTime * 100) (floor $ deltaTime * 100)
+  in
+  World { player = player world + step
+        , ticksLastFrame = t
+        }
 
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
