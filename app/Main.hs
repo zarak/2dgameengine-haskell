@@ -33,7 +33,7 @@ appLoop renderer = do
       -- doRender = render renderer
 
   -- doRender $ foldr updateWorld initialWorld events
-  drawWorld renderer initialWorld
+  render renderer initialWorld
 
   unless qPressed (appLoop renderer)
 
