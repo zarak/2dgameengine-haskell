@@ -29,10 +29,11 @@ appLoop renderer = do
   let qPressed = any eventIsQPress events
   -- update
   --
-      doRender :: World -> IO ()
-      doRender = render renderer
+      -- doRender :: World -> IO ()
+      -- doRender = render renderer
 
-  doRender $ foldr updateWorld initialWorld events
+  -- doRender $ foldr updateWorld initialWorld events
+  drawWorld renderer initialWorld
 
   unless qPressed (appLoop renderer)
 
@@ -42,6 +43,7 @@ updateWorld _ = id
 
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
+  SDL.rendererDrawColor renderer SDL.$= V4 255 255 255 255
   let rect = SDL.Rectangle (SDL.P rectanglePosition) rectangleSize
   SDL.drawRect renderer $ Just rect
 
@@ -64,7 +66,7 @@ render renderer world = do
   SDL.present renderer
 
 rectangleSize :: V2 CInt
-rectangleSize = V2 10 10
+rectangleSize = V2 20 20
 
 rectanglePosition :: V2 CInt
-rectanglePosition = V2 0 0
+rectanglePosition = V2 10 10
