@@ -67,7 +67,7 @@ appLoop renderer worldRef = do
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
 updateWorld _ world t =
   let deltaTime = fromIntegral (t - ticksLastFrame world) / 1000
-      deltaPos = V2 (floor $ deltaTime * 100) (floor $ deltaTime * 100)
+      deltaPos = V2 (ceiling $ deltaTime * 20) (ceiling $ deltaTime * 20)
   in
   World { player = player world + deltaPos
         , ticksLastFrame = t
