@@ -91,9 +91,12 @@ eventIsQPress event =
 
 render :: (MonadIO m) => SDL.Renderer -> World -> m ()
 render renderer world = do
+  -- Set background color
   SDL.rendererDrawColor renderer SDL.$= V4 0 0 0 255
+  -- Clear the back buffer
   SDL.clear renderer
 
   drawWorld renderer world
   
+  -- Swap front and back buffers
   SDL.present renderer
