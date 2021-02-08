@@ -17,6 +17,11 @@ data World = World
   , ticksLastFrame :: Word32
   } deriving Show
 
+data PlayerControl = PlayerControl 
+  { moveLeft :: SDL.InputMotion
+  , moveRight :: SDL.InputMotion
+  }
+
 rectangleSize :: V2 CInt
 rectangleSize = V2 20 20
 
@@ -63,6 +68,17 @@ appLoop renderer worldRef = do
   doRender world'
   writeIORef worldRef world'
   unless qPressed (appLoop renderer worldRef)
+
+updateControl :: SDL.Event -> PlayerControl -> PlayerControl
+updateControl event = case SDL.eventPayload event of
+  SDL.KeyboardEvent e ->
+    let motion = SDL.keyboardEventKeyMotion e
+     in case SDL.keysymKeycode $ SDL.keyboardEventKeysym e of
+          SDL.KeycodeA -> \c -> c { moveLeft = motion }
+          SDL.KeycodeD -> \c -> c { moveRight = motion }
+          _ -> id
+  _ -> id
+  
 
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
 updateWorld _ world t =
