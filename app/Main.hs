@@ -8,6 +8,7 @@ import qualified SDL.Raw.Timer          as SDLTimer
 import           Control.Monad          (unless)
 import           Control.Monad.IO.Class (MonadIO)
 import           Data.IORef
+import           Data.List (foldl')
 import           Foreign.C.Types        (CInt)
 import           Linear
 import Data.Word (Word32)
@@ -15,12 +16,13 @@ import Data.Word (Word32)
 data World = World
   { player :: V2 Float
   , ticksLastFrame :: Word32
+  , playerControl :: PlayerControl
   } deriving Show
 
 data PlayerControl = PlayerControl 
   { moveLeft :: SDL.InputMotion
   , moveRight :: SDL.InputMotion
-  }
+  } deriving Show
 
 rectangleSize :: V2 CInt
 rectangleSize = V2 20 20
@@ -34,6 +36,7 @@ frameTargetTime = 1000 / framesPerSecond;
 initialWorld :: World
 initialWorld = World { player = V2 10 10
                      , ticksLastFrame = 0
+                     , playerControl = PlayerControl SDL.Released SDL.Released
                      }
 
 main :: IO ()
@@ -56,16 +59,13 @@ appLoop renderer worldRef = do
          then timeToWait
          else 0
 
-      doRender :: World -> IO ()
-      doRender = render renderer
-
   SDL.delay $ floor timeToWait'
   t' <- SDLTimer.getTicks
 
   let world' = updateWorld events world t'
 
   print world'
-  doRender world'
+  render renderer world'
   writeIORef worldRef world'
   unless qPressed (appLoop renderer worldRef)
 
@@ -81,13 +81,22 @@ updateControl event = case SDL.eventPayload event of
   
 
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
-updateWorld _ world t =
+updateWorld events world t =
   let deltaTime = fromIntegral (t - ticksLastFrame world) / 1000
-      deltaPos = V2 (deltaTime * 20) (deltaTime * 20)
+      deltaPos = deltaTime * 20
+      playerControl' = foldl' (flip updateControl) (playerControl world) events
   in
-  World { player = player world + deltaPos
+  World { player = player world + fmap (*deltaPos) (controlToVec playerControl')
         , ticksLastFrame = t
+        , playerControl = playerControl'
         }
+
+controlToVec :: PlayerControl -> V2 Float
+controlToVec pc =
+  let x_left = if SDL.Pressed == moveLeft pc then (-1) else 0
+      x_right = if SDL.Pressed == moveRight pc then 1 else 0
+      x = x_left + x_right
+   in V2 x 0
 
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
