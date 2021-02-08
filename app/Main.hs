@@ -83,7 +83,7 @@ updateControl event = case SDL.eventPayload event of
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
 updateWorld events world t =
   let deltaTime = fromIntegral (t - ticksLastFrame world) / 1000
-      deltaPos = deltaTime * 20
+      deltaPos = deltaTime * 100
       playerControl' = foldl' (flip updateControl) (playerControl world) events
   in
   World { player = player world + fmap (*deltaPos) (controlToVec playerControl')
