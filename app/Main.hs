@@ -22,6 +22,8 @@ data World = World
 data PlayerControl = PlayerControl 
   { moveLeft :: SDL.InputMotion
   , moveRight :: SDL.InputMotion
+  , moveUp :: SDL.InputMotion
+  , moveDown :: SDL.InputMotion
   } deriving Show
 
 rectangleSize :: V2 CInt
@@ -36,7 +38,7 @@ frameTargetTime = 1000 / framesPerSecond;
 initialWorld :: World
 initialWorld = World { player = V2 10 10
                      , ticksLastFrame = 0
-                     , playerControl = PlayerControl SDL.Released SDL.Released
+                     , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
                      }
 
 main :: IO ()
@@ -74,8 +76,10 @@ updateControl event = case SDL.eventPayload event of
   SDL.KeyboardEvent e ->
     let motion = SDL.keyboardEventKeyMotion e
      in case SDL.keysymKeycode $ SDL.keyboardEventKeysym e of
-          SDL.KeycodeA -> \c -> c { moveLeft = motion }
-          SDL.KeycodeD -> \c -> c { moveRight = motion }
+          SDL.KeycodeH -> \c -> c { moveLeft = motion }
+          SDL.KeycodeL -> \c -> c { moveRight = motion }
+          SDL.KeycodeJ -> \c -> c { moveDown = motion }
+          SDL.KeycodeK -> \c -> c { moveUp = motion }
           _ -> id
   _ -> id
   
@@ -95,8 +99,11 @@ controlToVec :: PlayerControl -> V2 Float
 controlToVec pc =
   let x_left = if SDL.Pressed == moveLeft pc then (-1) else 0
       x_right = if SDL.Pressed == moveRight pc then 1 else 0
+      y_up = if SDL.Pressed == moveUp pc then (-1) else 0
+      y_down = if SDL.Pressed == moveDown pc then 1 else 0
       x = x_left + x_right
-   in V2 x 0
+      y = y_up + y_down
+   in V2 x y
 
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
