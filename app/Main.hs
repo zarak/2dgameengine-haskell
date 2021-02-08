@@ -13,7 +13,7 @@ import           Linear
 import Data.Word (Word32)
 
 data World = World
-  { player :: V2 CInt
+  { player :: V2 Float
   , ticksLastFrame :: Word32
   } deriving Show
 
@@ -67,7 +67,7 @@ appLoop renderer worldRef = do
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
 updateWorld _ world t =
   let deltaTime = fromIntegral (t - ticksLastFrame world) / 1000
-      deltaPos = V2 (ceiling $ deltaTime * 20) (ceiling $ deltaTime * 20)
+      deltaPos = V2 (deltaTime * 20) (deltaTime * 20)
   in
   World { player = player world + deltaPos
         , ticksLastFrame = t
@@ -75,7 +75,7 @@ updateWorld _ world t =
 
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
-  let position = player world
+  let position = round <$> player world
   SDL.rendererDrawColor renderer SDL.$= V4 255 255 255 255
   let rect = SDL.Rectangle (SDL.P position) rectangleSize
   SDL.drawRect renderer $ Just rect
@@ -93,6 +93,7 @@ render :: (MonadIO m) => SDL.Renderer -> World -> m ()
 render renderer world = do
   -- Set background color
   SDL.rendererDrawColor renderer SDL.$= V4 0 0 0 255
+
   -- Clear the back buffer
   SDL.clear renderer
 
