@@ -27,7 +27,7 @@ data PlayerControl = PlayerControl
   } deriving Show
 
 rectangleSize :: V2 CInt
-rectangleSize = V2 20 20
+rectangleSize = V2 16 20
 
 framesPerSecond :: Float
 framesPerSecond = 60
@@ -36,7 +36,7 @@ frameTargetTime :: Float
 frameTargetTime = 1000 / framesPerSecond;
 
 initialWorld :: World
-initialWorld = World { player = V2 10 10
+initialWorld = World { player = V2 6 10
                      , ticksLastFrame = 0
                      , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
                      }
