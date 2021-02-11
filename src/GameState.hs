@@ -104,7 +104,7 @@ controlToVec pc =
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
   let position = round <$> player world
-  SDL.rendererDrawColor renderer SDL.$= V4 255 255 255 255
+  SDL.rendererDrawColor renderer SDL.$= V4 0 255 255 255
   let rect = SDL.Rectangle (SDL.P position) rectangleSize
   SDL.drawRect renderer $ Just rect
 
