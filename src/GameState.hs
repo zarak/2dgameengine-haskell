@@ -45,8 +45,8 @@ initialWorld = World { player = V2 6 10
                      }
 
 
-appLoop :: SDL.Renderer -> IORef World -> IO ()
-appLoop renderer worldRef = do
+appLoop :: SDL.Renderer -> (SDL.Texture, SDL.TextureInfo) -> IORef World -> IO ()
+appLoop renderer tx worldRef = do
   events <- SDL.pollEvents
   world <- readIORef worldRef
   t <- SDLTimer.getTicks
@@ -65,7 +65,7 @@ appLoop renderer worldRef = do
   print world'
   render renderer world'
   writeIORef worldRef world'
-  unless qPressed (appLoop renderer worldRef)
+  unless qPressed (appLoop renderer tx worldRef)
 
 updateControl :: SDL.Event -> PlayerControl -> PlayerControl
 updateControl event = case SDL.eventPayload event of
