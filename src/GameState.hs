@@ -22,7 +22,8 @@ data World = World
   { player :: V2 Float
   , ticksLastFrame :: Word32
   , playerControl :: PlayerControl
-  , worldProjectile :: V2 Float
+  , projectilePosition :: V2 Float
+  , projectileDirection :: V2 Float
   } deriving Show
 
 data PlayerControl = PlayerControl 
@@ -45,7 +46,8 @@ initialWorld :: World
 initialWorld = World { player = V2 6 10
                      , ticksLastFrame = 0
                      , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
-                     , worldProjectile = V2 320 240
+                     , projectilePosition = V2 320 240
+                     , projectileDirection = V2 1 1
                      }
 
 
@@ -91,12 +93,13 @@ updateWorld events world t =
       playerControl' = foldl' (flip updateControl) (playerControl world) events
       player' = player world + fmap (*deltaPos) (controlToVec playerControl')
       clampedPlayer = clamp player'
-      worldProjectile' = worldProjectile world + 1
+      worldProjectile' = updateProjectileDirection (projectilePosition world) (projectileDirection world)
   in
   World { player = clampedPlayer
         , ticksLastFrame = t
         , playerControl = playerControl'
-        , worldProjectile = worldProjectile'
+        , projectilePosition = projectilePosition world + worldProjectile'
+        , projectileDirection = worldProjectile'
         }
 
 worldProjectile' :: V2 Float
@@ -164,10 +167,15 @@ drawCenterLine renderer =
 
 drawProjectile :: MonadIO m => SDL.Renderer -> World -> m ()
 drawProjectile renderer world = do
-  let projectile = SDL.Rectangle (SDL.P projectilePosition) projectileSize
+  let projectile = SDL.Rectangle (SDL.P worldProjectilePosition) projectileSize
   SDL.fillRect renderer $ Just projectile
   SDL.drawRect renderer $ Just projectile
     where
-      projectilePosition = round <$> worldProjectile world
+      worldProjectilePosition = round <$> projectilePosition world
       projectileSize = V2 10 10
 
+updateProjectileDirection :: (Num a, Ord a) => V2 a -> V2 a -> V2 a
+updateProjectileDirection (V2 x y) (V2 dx dy)
+      | x > 680 || x < 0 = V2 (-dx) dy
+      | y > 480 || y < 0 = V2 dx (-dy)
+      | otherwise = V2 dx dy
