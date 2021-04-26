@@ -5,7 +5,6 @@ module GameState
   , clamp
   ) where
 
-
 import qualified SDL
 import qualified SDL.Raw.Timer          as SDLTimer
 
@@ -168,6 +167,7 @@ lb = V2 0 0
 clamp :: (Num a, Ord a) => V2 a -> V2 a
 clamp = liftA2 min ub . liftA2 max lb
 
+drawCenterLine :: MonadIO m => SDL.Renderer -> m ()
 drawCenterLine renderer = 
   SDL.drawLine renderer bottomMid topMid
     where
