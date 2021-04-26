@@ -22,6 +22,7 @@ data World = World
   { player :: V2 Float
   , ticksLastFrame :: Word32
   , playerControl :: PlayerControl
+  , worldProjectile :: V2 Float
   } deriving Show
 
 data PlayerControl = PlayerControl 
@@ -44,6 +45,7 @@ initialWorld :: World
 initialWorld = World { player = V2 6 10
                      , ticksLastFrame = 0
                      , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
+                     , worldProjectile = V2 320 240
                      }
 
 
@@ -89,13 +91,16 @@ updateWorld events world t =
       playerControl' = foldl' (flip updateControl) (playerControl world) events
       player' = player world + fmap (*deltaPos) (controlToVec playerControl')
       clampedPlayer = clamp player'
-      V2 x y = player'
-
+      worldProjectile' = worldProjectile world + 1
   in
   World { player = clampedPlayer
         , ticksLastFrame = t
         , playerControl = playerControl'
+        , worldProjectile = worldProjectile'
         }
+
+worldProjectile' :: V2 Float
+worldProjectile' = error "not implemented"
 
 controlToVec :: PlayerControl -> V2 Float
 controlToVec pc =
@@ -113,6 +118,11 @@ drawWorld renderer world = do
   SDL.rendererDrawColor renderer SDL.$= V4 0 255 255 255
   let rect = SDL.Rectangle (SDL.P position) rectangleSize
   SDL.drawRect renderer $ Just rect
+
+  drawCenterLine renderer
+
+  drawProjectile renderer world
+
 
 eventIsQPress :: SDL.Event -> Bool
 eventIsQPress event =
@@ -145,3 +155,19 @@ lb = V2 0 0
 
 clamp :: (Num a, Ord a) => V2 a -> V2 a
 clamp = liftA2 min ub . liftA2 max lb
+
+drawCenterLine renderer = 
+  SDL.drawLine renderer bottomMid topMid
+    where
+      bottomMid = SDL.P $ V2 320 0
+      topMid = SDL.P $ V2 320 480 
+
+drawProjectile :: MonadIO m => SDL.Renderer -> World -> m ()
+drawProjectile renderer world = do
+  let projectile = SDL.Rectangle (SDL.P projectilePosition) projectileSize
+  SDL.fillRect renderer $ Just projectile
+  SDL.drawRect renderer $ Just projectile
+    where
+      projectilePosition = round <$> worldProjectile world
+      projectileSize = V2 10 10
+
