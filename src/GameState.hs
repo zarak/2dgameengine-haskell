@@ -2,6 +2,7 @@
 module GameState
   ( appLoop
   , initialWorld
+  , clamp
   ) where
 
 
@@ -15,6 +16,7 @@ import           Data.List              (foldl')
 import           Data.Word              (Word32)
 import           Foreign.C.Types        (CInt)
 import           Linear
+import Control.Applicative (liftA2)
 
 data World = World
   { player :: V2 Float
@@ -29,8 +31,8 @@ data PlayerControl = PlayerControl
   , moveDown :: SDL.InputMotion
   } deriving Show
 
-rectangleSize :: V2 CInt
-rectangleSize = V2 16 20
+rectangleSize :: (Ord a, Num a) => V2 a
+rectangleSize = V2 16 100
 
 framesPerSecond :: Float
 framesPerSecond = 60
@@ -85,8 +87,12 @@ updateWorld events world t =
   let deltaTime = fromIntegral (t - ticksLastFrame world) / 1000
       deltaPos = deltaTime * 200
       playerControl' = foldl' (flip updateControl) (playerControl world) events
+      player' = player world + fmap (*deltaPos) (controlToVec playerControl')
+      clampedPlayer = clamp player'
+      V2 x y = player'
+
   in
-  World { player = player world + fmap (*deltaPos) (controlToVec playerControl')
+  World { player = clampedPlayer
         , ticksLastFrame = t
         , playerControl = playerControl'
         }
@@ -129,3 +135,13 @@ render renderer world = do
   
   -- Swap front and back buffers
   SDL.present renderer
+
+
+ub :: (Num a, Ord a) => V2 a
+ub = V2 640 480 - rectangleSize
+
+lb :: (Num a, Ord a) => V2 a
+lb = V2 0 0
+
+clamp :: (Num a, Ord a) => V2 a -> V2 a
+clamp = liftA2 min ub . liftA2 max lb
