@@ -103,7 +103,7 @@ updateWorld events world t =
       World { player = clampedPlayer
             , ticksLastFrame = t
             , playerControl = playerControl'
-            , projectilePosition = projectilePosition world + worldProjectile'
+            , projectilePosition = projectilePosition world + 2 * worldProjectile'
             , projectileDirection = worldProjectile'
             }
 
@@ -130,9 +130,21 @@ drawWorld renderer world = do
   let rect = SDL.Rectangle (SDL.P position) rectangleSize
   SDL.drawRect renderer $ Just rect
 
+  drawOpponent renderer
+
   drawCenterLine renderer
 
   drawProjectile renderer world
+
+drawOpponent :: MonadIO m => SDL.Renderer -> m ()
+drawOpponent renderer = do
+  let rect = SDL.Rectangle (SDL.P position) rectangleSize
+  SDL.drawRect renderer $ Just rect
+    where
+      (V2 playerSizeX _) = rectangleSize
+      distanceFromRightWall = 6
+      position = V2 (640 - distanceFromRightWall - playerSizeX) 100
+
 
 
 eventIsQPress :: SDL.Event -> Bool
@@ -184,13 +196,18 @@ drawProjectile renderer world = do
 
 updateProjectileDirection :: World -> V2 Float
 updateProjectileDirection w
-      | playerCollision (player w) (projectilePosition w) = V2 (-dx) dy
+      | playerCollision (player w) (projectilePosition w) 
+        || playerCollision opponentPosition (projectilePosition w) = V2 (-dx) dy
       | y > 480 - projectileSizeY || y < 0 = V2 dx (-dy)
       | otherwise = V2 dx dy
     where
       (V2 x y) = projectilePosition w
       (V2 dx dy) = projectileDirection w
       (V2 _ projectileSizeY) = projectileSize
+
+      (V2 playerSizeX _) = rectangleSize
+      distanceFromRightWall = 6
+      opponentPosition = V2 (640 - distanceFromRightWall - playerSizeX) 100
 
 playerCollision :: (Ord a, Num a) => V2 a -> V2 a -> Bool
 playerCollision (V2 x y) (V2 px py) =
