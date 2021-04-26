@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveFunctor #-}
 module GameState
   ( appLoop
   , initialWorld
@@ -17,8 +18,15 @@ import           Foreign.C.Types        (CInt)
 import           Linear
 import Control.Applicative (liftA2)
 
+-- newtype Position a = Position (V2 Float)
+  -- deriving Show
+
+-- data Player
+-- data Opponent
+
 data World = World
   { player :: V2 Float
+  , opponent :: V2 Float
   , ticksLastFrame :: Word32
   , playerControl :: PlayerControl
   , projectilePosition :: V2 Float
@@ -45,12 +53,17 @@ frameTargetTime :: Float
 frameTargetTime = 1000 / framesPerSecond;
 
 initialWorld :: World
-initialWorld = World { player = V2 6 10
-                     , ticksLastFrame = 0
-                     , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
-                     , projectilePosition = V2 320 240
-                     , projectileDirection = V2 (-1) 1
-                     }
+initialWorld = 
+  let (V2 playerSizeX _) = rectangleSize 
+      distanceFromRightWall = 6
+    in
+      World { player = V2 6 10
+             , opponent = V2 (640 - distanceFromRightWall - playerSizeX) 100
+             , ticksLastFrame = 0
+             , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
+             , projectilePosition = V2 320 240
+             , projectileDirection = V2 (-1) 1
+             }
 
 
 appLoop :: SDL.Renderer -> IORef World -> IO ()
@@ -94,13 +107,16 @@ updateWorld events world t =
       deltaPos = deltaTime * 200
       playerControl' = foldl' (flip updateControl) (playerControl world) events
       player' = player world + fmap (*deltaPos) (controlToVec playerControl')
+      opponent' = opponent world
       clampedPlayer = clamp player'
+      clampedOpponent = clamp opponent'
       worldProjectile' = updateProjectileDirection world
   in
   if wallCollision (projectilePosition world)
      then initialWorld
      else
       World { player = clampedPlayer
+            , opponent = clampedOpponent
             , ticksLastFrame = t
             , playerControl = playerControl'
             , projectilePosition = projectilePosition world + 2 * worldProjectile'
@@ -130,21 +146,18 @@ drawWorld renderer world = do
   let rect = SDL.Rectangle (SDL.P position) rectangleSize
   SDL.drawRect renderer $ Just rect
 
-  drawOpponent renderer
+  drawOpponent renderer world
 
   drawCenterLine renderer
 
   drawProjectile renderer world
 
-drawOpponent :: MonadIO m => SDL.Renderer -> m ()
-drawOpponent renderer = do
+drawOpponent :: MonadIO m => SDL.Renderer -> World -> m ()
+drawOpponent renderer w = do
   let rect = SDL.Rectangle (SDL.P position) rectangleSize
   SDL.drawRect renderer $ Just rect
     where
-      (V2 playerSizeX _) = rectangleSize
-      distanceFromRightWall = 6
-      position = V2 (640 - distanceFromRightWall - playerSizeX) 100
-
+      position = round <$> opponent w
 
 
 eventIsQPress :: SDL.Event -> Bool
@@ -197,20 +210,23 @@ drawProjectile renderer world = do
 updateProjectileDirection :: World -> V2 Float
 updateProjectileDirection w
       | playerCollision (player w) (projectilePosition w) 
-        || playerCollision opponentPosition (projectilePosition w) = V2 (-dx) dy
+        || opponentCollision opponentPosition (projectilePosition w) = V2 (-dx) dy
       | y > 480 - projectileSizeY || y < 0 = V2 dx (-dy)
       | otherwise = V2 dx dy
     where
       (V2 x y) = projectilePosition w
       (V2 dx dy) = projectileDirection w
       (V2 _ projectileSizeY) = projectileSize
-
-      (V2 playerSizeX _) = rectangleSize
-      distanceFromRightWall = 6
-      opponentPosition = V2 (640 - distanceFromRightWall - playerSizeX) 100
+      opponentPosition = opponent w
 
 playerCollision :: (Ord a, Num a) => V2 a -> V2 a -> Bool
 playerCollision (V2 x y) (V2 px py) =
   py > y && py < y + playerSizeY && px < x + playerSizeX && px > x
+    where
+      (V2 playerSizeX playerSizeY) = rectangleSize
+
+opponentCollision :: (Ord a, Num a) => V2 a -> V2 a -> Bool
+opponentCollision (V2 x y) (V2 px py) =
+  (py > y) && (py < y + playerSizeY) && (px > x - playerSizeX) && px < x
     where
       (V2 playerSizeX playerSizeY) = rectangleSize
