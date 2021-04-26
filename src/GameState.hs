@@ -33,6 +33,9 @@ data PlayerControl = PlayerControl
   , moveDown :: SDL.InputMotion
   } deriving Show
 
+projectileSize :: (Ord a, Num a) => V2 a
+projectileSize = V2 10 10
+
 rectangleSize :: (Ord a, Num a) => V2 a
 rectangleSize = V2 16 100
 
@@ -95,15 +98,21 @@ updateWorld events world t =
       clampedPlayer = clamp player'
       worldProjectile' = updateProjectileDirection (projectilePosition world) (projectileDirection world)
   in
-  World { player = clampedPlayer
-        , ticksLastFrame = t
-        , playerControl = playerControl'
-        , projectilePosition = projectilePosition world + worldProjectile'
-        , projectileDirection = worldProjectile'
-        }
+  if wallCollision (projectilePosition world)
+     then initialWorld
+     else
+      World { player = clampedPlayer
+            , ticksLastFrame = t
+            , playerControl = playerControl'
+            , projectilePosition = projectilePosition world + worldProjectile'
+            , projectileDirection = worldProjectile'
+            }
 
-worldProjectile' :: V2 Float
-worldProjectile' = error "not implemented"
+wallCollision :: (Ord a, Num a) => V2 a -> Bool
+wallCollision (V2 x y) =
+  x > (640 - projectileSizeX) || x < 0
+    where
+      (V2 projectileSizeX _) = projectileSize
 
 controlToVec :: PlayerControl -> V2 Float
 controlToVec pc =
@@ -172,10 +181,10 @@ drawProjectile renderer world = do
   SDL.drawRect renderer $ Just projectile
     where
       worldProjectilePosition = round <$> projectilePosition world
-      projectileSize = V2 10 10
 
 updateProjectileDirection :: (Num a, Ord a) => V2 a -> V2 a -> V2 a
 updateProjectileDirection (V2 x y) (V2 dx dy)
-      | x > 680 || x < 0 = V2 (-dx) dy
-      | y > 480 || y < 0 = V2 dx (-dy)
+      | y > 480 - projectileSizeY || y < 0 = V2 dx (-dy)
       | otherwise = V2 dx dy
+    where
+      (V2 _ projectileSizeY) = projectileSize
