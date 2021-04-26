@@ -50,7 +50,7 @@ initialWorld = World { player = V2 6 10
                      , ticksLastFrame = 0
                      , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
                      , projectilePosition = V2 320 240
-                     , projectileDirection = V2 1 1
+                     , projectileDirection = V2 (-1) 1
                      }
 
 
@@ -96,7 +96,7 @@ updateWorld events world t =
       playerControl' = foldl' (flip updateControl) (playerControl world) events
       player' = player world + fmap (*deltaPos) (controlToVec playerControl')
       clampedPlayer = clamp player'
-      worldProjectile' = updateProjectileDirection (projectilePosition world) (projectileDirection world)
+      worldProjectile' = updateProjectileDirection world
   in
   if wallCollision (projectilePosition world)
      then initialWorld
@@ -182,9 +182,18 @@ drawProjectile renderer world = do
     where
       worldProjectilePosition = round <$> projectilePosition world
 
-updateProjectileDirection :: (Num a, Ord a) => V2 a -> V2 a -> V2 a
-updateProjectileDirection (V2 x y) (V2 dx dy)
+updateProjectileDirection :: World -> V2 Float
+updateProjectileDirection w
+      | playerCollision (player w) (projectilePosition w) = V2 (-dx) dy
       | y > 480 - projectileSizeY || y < 0 = V2 dx (-dy)
       | otherwise = V2 dx dy
     where
+      (V2 x y) = projectilePosition w
+      (V2 dx dy) = projectileDirection w
       (V2 _ projectileSizeY) = projectileSize
+
+playerCollision :: (Ord a, Num a) => V2 a -> V2 a -> Bool
+playerCollision (V2 x y) (V2 px py) =
+  py > y && py < y + playerSizeY && px < x + playerSizeX && px > x
+    where
+      (V2 playerSizeX playerSizeY) = rectangleSize
