@@ -19,3 +19,12 @@ ub = V2 640 480 - rectangleSize
 
 lb :: (Num a, Ord a) => V2 a
 lb = V2 0 0
+
+opponentStartPosition :: V2 Float
+opponentStartPosition = V2 (640 - distanceFromRightWall - playerSizeX) 100
+ where
+  (V2 playerSizeX _) = rectangleSize
+  distanceFromRightWall = 6
+
+playerStartPosition :: V2 Float
+playerStartPosition = V2 6 10

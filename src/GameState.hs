@@ -10,10 +10,10 @@ module GameState (
 import qualified SDL
 import qualified SDL.Raw.Timer as SDLTimer
 
+import Constants
 import Control.Applicative (liftA2)
 import Control.Monad (unless)
 import Control.Monad.IO.Class (MonadIO)
-import Constants
 import Data.IORef
 import Data.List (foldl')
 import Data.Word (Word32)
@@ -38,19 +38,16 @@ data PlayerControl = PlayerControl
   }
   deriving (Show)
 
-
 initialWorld :: World
 initialWorld =
-  let (V2 playerSizeX _) = rectangleSize
-      distanceFromRightWall = 6
-   in World
-        { player = V2 6 10
-        , opponent = V2 (640 - distanceFromRightWall - playerSizeX) 100
-        , ticksLastFrame = 0
-        , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
-        , projectilePosition = V2 320 240
-        , projectileDirection = V2 (-1) 1
-        }
+  World
+    { player = playerStartPosition
+    , opponent = opponentStartPosition
+    , ticksLastFrame = 0
+    , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
+    , projectilePosition = V2 320 240 -- TODO: Randomize y position
+    , projectileDirection = V2 (-1) 1 -- TODO: Randomize Direction
+    }
 
 appLoop :: SDL.Renderer -> IORef World -> IO ()
 appLoop renderer worldRef = do
