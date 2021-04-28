@@ -13,17 +13,12 @@ import qualified SDL.Raw.Timer as SDLTimer
 import Control.Applicative (liftA2)
 import Control.Monad (unless)
 import Control.Monad.IO.Class (MonadIO)
+import Constants
 import Data.IORef
 import Data.List (foldl')
 import Data.Word (Word32)
 import Foreign.C.Types (CInt)
 import Linear
-
--- newtype Position a = Position (V2 Float)
--- deriving Show
-
--- data Player
--- data Opponent
 
 data World = World
   { player :: V2 Float
@@ -43,17 +38,6 @@ data PlayerControl = PlayerControl
   }
   deriving (Show)
 
-projectileSize :: (Ord a, Num a) => V2 a
-projectileSize = V2 10 10
-
-rectangleSize :: (Ord a, Num a) => V2 a
-rectangleSize = V2 16 100
-
-framesPerSecond :: Float
-framesPerSecond = 60
-
-frameTargetTime :: Float
-frameTargetTime = 1000 / framesPerSecond
 
 initialWorld :: World
 initialWorld =
@@ -181,12 +165,6 @@ render renderer world = do
 
   -- Swap front and back buffers
   SDL.present renderer
-
-ub :: (Num a, Ord a) => V2 a
-ub = V2 640 480 - rectangleSize
-
-lb :: (Num a, Ord a) => V2 a
-lb = V2 0 0
 
 clamp :: (Num a, Ord a) => V2 a -> V2 a
 clamp = liftA2 min ub . liftA2 max lb
