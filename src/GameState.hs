@@ -25,6 +25,7 @@ data World = World
   , opponent :: V2 Float
   , ticksLastFrame :: Word32
   , playerControl :: PlayerControl
+  , opponentControl :: PlayerControl
   , projectilePosition :: V2 Float
   , projectileDirection :: V2 Float
   }
@@ -45,6 +46,7 @@ initialWorld =
     , opponent = opponentStartPosition
     , ticksLastFrame = 0
     , playerControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
+    , opponentControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
     , projectilePosition = V2 320 240 -- TODO: Randomize y position
     , projectileDirection = V2 (-1) 1 -- TODO: Randomize Direction
     }
@@ -84,13 +86,27 @@ updateControl event = case SDL.eventPayload event of
           _ -> id
   _ -> id
 
+updateOpponentControl :: SDL.Event -> PlayerControl -> PlayerControl
+updateOpponentControl event = case SDL.eventPayload event of
+  SDL.KeyboardEvent e ->
+    let motion = SDL.keyboardEventKeyMotion e
+     in case SDL.keysymKeycode $ SDL.keyboardEventKeysym e of
+          SDL.KeycodeA -> \c -> c{moveLeft = motion}
+          SDL.KeycodeD -> \c -> c{moveRight = motion}
+          SDL.KeycodeS -> \c -> c{moveDown = motion}
+          SDL.KeycodeW -> \c -> c{moveUp = motion}
+          _ -> id
+  _ -> id
+
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
 updateWorld events world t =
   let deltaTime = fromIntegral (t - ticksLastFrame world) / 1000
       deltaPos = deltaTime * 200
       playerControl' = foldl' (flip updateControl) (playerControl world) events
+      opponentControl' :: PlayerControl
+      opponentControl' = foldl' (flip updateOpponentControl) (opponentControl world) events
       player' = player world + fmap (* deltaPos) (controlToVec playerControl')
-      opponent' = opponent world
+      opponent' = opponent world + fmap (* deltaPos) (controlToVec opponentControl')
       clampedPlayer = clamp player'
       clampedOpponent = clamp opponent'
       worldProjectile' = updateProjectileDirection world
@@ -102,9 +118,11 @@ updateWorld events world t =
             , opponent = clampedOpponent
             , ticksLastFrame = t
             , playerControl = playerControl'
+            , opponentControl = opponentControl'
             , projectilePosition = projectilePosition world + 2 * worldProjectile'
             , projectileDirection = worldProjectile'
             }
+
 
 wallCollision :: (Ord a, Num a) => V2 a -> Bool
 wallCollision (V2 x y) =

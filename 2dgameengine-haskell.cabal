@@ -24,7 +24,7 @@ library
                     , GameState
 
     -- Modules included in this library but not exported.
-    -- other-modules:    
+    other-modules:    Constants
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
