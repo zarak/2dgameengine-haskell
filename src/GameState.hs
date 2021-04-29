@@ -220,6 +220,7 @@ playerCollision (V2 x y) (V2 px py) =
 
 opponentCollision :: (Ord a, Num a) => V2 a -> V2 a -> Bool
 opponentCollision (V2 x y) (V2 px py) =
-  (py > y) && (py < y + playerSizeY) && (px > x - playerSizeX) && px < x
+  (py > y) && (py < y + playerSizeY) && (px > x - projectileSizeX) && px < x
  where
   (V2 playerSizeX playerSizeY) = rectangleSize
+  (V2 projectileSizeX _) = projectileSize
