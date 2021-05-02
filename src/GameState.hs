@@ -20,6 +20,9 @@ import Data.Word (Word32)
 import Foreign.C.Types (CInt)
 import Linear
 
+
+
+
 data World = World
   { player :: V2 Float
   , opponent :: V2 Float
@@ -201,9 +204,8 @@ drawProjectile renderer world = do
 
 updateProjectileDirection :: World -> V2 Float
 updateProjectileDirection w
-  | playerCollision (player w) (projectilePosition w)
-      || opponentCollision opponentPosition (projectilePosition w) =
-    V2 (- dx) dy
+  | playerCollision (player w) (projectilePosition w) = V2 (abs dx) dy
+  | opponentCollision opponentPosition (projectilePosition w) = V2 (- abs dx) dy
   | y > 480 - projectileSizeY || y < 0 = V2 dx (- dy)
   | otherwise = V2 dx dy
  where
@@ -214,7 +216,8 @@ updateProjectileDirection w
 
 playerCollision :: (Ord a, Num a) => V2 a -> V2 a -> Bool
 playerCollision (V2 x y) (V2 px py) =
-  py > y && py < y + playerSizeY && px < x + playerSizeX && px > x
+  py > y && py < y + playerSizeY -- within paddle height
+    && px < x + playerSizeX && px > x
  where
   (V2 playerSizeX playerSizeY) = rectangleSize
 
@@ -224,3 +227,8 @@ opponentCollision (V2 x y) (V2 px py) =
  where
   (V2 playerSizeX playerSizeY) = rectangleSize
   (V2 projectileSizeX _) = projectileSize
+
+
+-- 1. Use circle as projectile (try out other shapes in SDL2)
+-- 2. Projectile should reflect only after hitting the front side of the paddle
+-- 3. Score
