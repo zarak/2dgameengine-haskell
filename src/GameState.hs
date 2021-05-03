@@ -19,6 +19,9 @@ import Data.List (foldl')
 import Data.Word (Word32)
 import Foreign.C.Types (CInt)
 import Linear
+import qualified SDL.Font (load, solid, initialize)
+import Common (renderSurfaceToWindow)
+import qualified Common as C
 
 
 
@@ -146,9 +149,12 @@ controlToVec pc =
 drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
 drawWorld renderer world = do
   let position = round <$> player world
-  SDL.rendererDrawColor renderer SDL.$= V4 0 255 255 255
+  -- SDL.rendererDrawColor renderer SDL.$= V4 0 255 255 255
+  SDL.rendererDrawColor renderer SDL.$= white
   let rect = SDL.Rectangle (SDL.P position) rectangleSize
   SDL.drawRect renderer $ Just rect
+
+  drawScore renderer
 
   drawOpponent renderer world
 
@@ -186,6 +192,16 @@ render renderer world = do
 
 clamp :: (Num a, Ord a) => V2 a -> V2 a
 clamp = liftA2 min ub . liftA2 max lb
+
+drawScore :: MonadIO m => SDL.Renderer -> m ()
+drawScore r  = do
+  SDL.Font.initialize
+  font <- SDL.Font.load "fonts/OpenSans-Regular.ttf" 20
+  fontSurface <- SDL.Font.solid font white "Score" 
+  scoreSprite <- toTexture =<< SDL.Font.solid font white "0 - 0" 
+  SDL.copyEx r scoreSprite Nothing (Just $ floor <$> C.mkRect 280 10 60 20) 0.0 Nothing (V2 False False)
+    where
+      toTexture surface = SDL.createTextureFromSurface r surface
 
 drawCenterLine :: MonadIO m => SDL.Renderer -> m ()
 drawCenterLine renderer =

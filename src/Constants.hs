@@ -1,6 +1,7 @@
 module Constants where
 
-import Linear.V2
+import qualified SDL.Font
+import SDL
 
 projectileSize :: (Ord a, Num a) => V2 a
 projectileSize = V2 10 10
@@ -28,3 +29,9 @@ opponentStartPosition = V2 (640 - distanceFromRightWall - playerSizeX) 100
 
 playerStartPosition :: V2 Float
 playerStartPosition = V2 6 10
+
+green :: SDL.Font.Color
+green = V4 0 255 0 0
+
+white :: SDL.Font.Color
+white = V4 255 255 255 0
