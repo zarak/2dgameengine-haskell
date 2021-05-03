@@ -53,6 +53,7 @@ executable 2dgameengine-haskell
         monad-loops,
         sdl2,
         sdl2-image,
+        sdl2-ttf,
         text,
         linear,
         sdl2-gfx

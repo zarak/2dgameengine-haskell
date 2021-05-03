@@ -22,6 +22,7 @@ import qualified SDL.Font (load, solid, initialize, blended)
 import Common (renderSurfaceToWindow)
 import qualified Common as C
 import qualified Data.Text as T
+import SDL.Font (Font(Font))
 
 
 data World = World
@@ -59,8 +60,8 @@ initialWorld =
     , opponentScore = 0
     }
 
-appLoop :: SDL.Renderer -> IORef World -> IO ()
-appLoop renderer worldRef = do
+appLoop :: Font -> SDL.Renderer -> IORef World -> IO ()
+appLoop font renderer worldRef = do
   events <- SDL.pollEvents
   world <- readIORef worldRef
   t <- SDLTimer.getTicks
@@ -78,9 +79,9 @@ appLoop renderer worldRef = do
   let world' = updateWorld events world t'
 
   print world'
-  render renderer world'
+  render font renderer world'
   writeIORef worldRef world'
-  unless qPressed (appLoop renderer worldRef)
+  unless qPressed (appLoop font renderer worldRef)
 
 updateControl :: SDL.Event -> PlayerControl -> PlayerControl
 updateControl event = case SDL.eventPayload event of
@@ -108,8 +109,12 @@ updateOpponentControl event = case SDL.eventPayload event of
 
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
 updateWorld events world t
-     | leftWallCollision (projectilePosition world) = initialWorld { opponentScore = opponentScore' + 1 }
-     | rightWallCollision (projectilePosition world) = initialWorld { playerScore = playerScore' + 1 }
+     | leftWallCollision (projectilePosition world) =
+        initialWorld { opponentScore = opponentScore' + 1
+                     , playerScore = playerScore' }
+     | rightWallCollision (projectilePosition world) = 
+        initialWorld { opponentScore = opponentScore'
+                     , playerScore = playerScore' + 1 }
      | otherwise = 
           World
             { player = clampedPlayer
@@ -156,15 +161,15 @@ controlToVec pc =
       y = y_up + y_down
    in V2 x y
 
-drawWorld :: MonadIO m => SDL.Renderer -> World -> m ()
-drawWorld renderer world = do
+drawWorld :: MonadIO m => Font -> SDL.Renderer -> World -> m ()
+drawWorld font renderer world = do
   let position = round <$> player world
   -- SDL.rendererDrawColor renderer SDL.$= V4 0 255 255 255
   SDL.rendererDrawColor renderer SDL.$= white
   let rect = SDL.Rectangle (SDL.P position) rectangleSize
   SDL.drawRect renderer $ Just rect
 
-  drawScore renderer world
+  drawScore font renderer world
 
   drawOpponent renderer world
 
@@ -187,15 +192,15 @@ eventIsQPress event =
         && SDL.keysymKeycode (SDL.keyboardEventKeysym keyboardEvent) == SDL.KeycodeQ
     _ -> False
 
-render :: (MonadIO m) => SDL.Renderer -> World -> m ()
-render renderer world = do
+render :: (MonadIO m) => Font -> SDL.Renderer -> World -> m ()
+render font renderer world = do
   -- Set background color
   SDL.rendererDrawColor renderer SDL.$= V4 0 0 0 255
 
   -- Clear the back buffer
   SDL.clear renderer
 
-  drawWorld renderer world
+  drawWorld font renderer world
 
   -- Swap front and back buffers
   SDL.present renderer
@@ -203,10 +208,8 @@ render renderer world = do
 clamp :: (Num a, Ord a) => V2 a -> V2 a
 clamp = liftA2 min ub . liftA2 max lb
 
-drawScore :: MonadIO m => SDL.Renderer -> World -> m ()
-drawScore r w = do
-  SDL.Font.initialize
-  font <- SDL.Font.load "fonts/OpenSans-Regular.ttf" 400
+drawScore :: MonadIO m => Font -> SDL.Renderer -> World -> m ()
+drawScore font r w = do
   fontSurface <- SDL.Font.blended font white (T.pack $ show (playerScore w) <> "   " <> show (opponentScore w))
   scoreSprite <- toTexture fontSurface
   SDL.copyEx r scoreSprite Nothing (Just $ floor <$> C.mkRect 270 10 100 50) 0.0 Nothing (V2 False False)
