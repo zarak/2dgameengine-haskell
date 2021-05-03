@@ -197,8 +197,8 @@ drawScore :: MonadIO m => SDL.Renderer -> m ()
 drawScore r  = do
   SDL.Font.initialize
   font <- SDL.Font.load "fonts/OpenSans-Regular.ttf" 20
-  fontSurface <- SDL.Font.solid font white "Score" 
-  scoreSprite <- toTexture =<< SDL.Font.solid font white "0 - 0" 
+  fontSurface <- SDL.Font.solid font white "0 - 0" 
+  scoreSprite <- toTexture fontSurface
   SDL.copyEx r scoreSprite Nothing (Just $ floor <$> C.mkRect 280 10 60 20) 0.0 Nothing (V2 False False)
     where
       toTexture surface = SDL.createTextureFromSurface r surface
