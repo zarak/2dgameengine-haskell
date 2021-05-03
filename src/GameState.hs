@@ -22,8 +22,7 @@ import Linear
 import qualified SDL.Font (load, solid, initialize, blended)
 import Common (renderSurfaceToWindow)
 import qualified Common as C
-
-
+import qualified Data.Text as T
 
 
 data World = World
@@ -34,6 +33,8 @@ data World = World
   , opponentControl :: PlayerControl
   , projectilePosition :: V2 Float
   , projectileDirection :: V2 Float
+  , playerScore :: Integer
+  , opponentScore :: Integer
   }
   deriving (Show)
 
@@ -55,6 +56,8 @@ initialWorld =
     , opponentControl = PlayerControl SDL.Released SDL.Released SDL.Released SDL.Released
     , projectilePosition = V2 320 240 -- TODO: Randomize y position
     , projectileDirection = V2 (-1) 1 -- TODO: Randomize Direction
+    , playerScore = 0
+    , opponentScore = 0
     }
 
 appLoop :: SDL.Renderer -> IORef World -> IO ()
@@ -116,8 +119,10 @@ updateWorld events world t =
       clampedPlayer = clamp player'
       clampedOpponent = clamp opponent'
       worldProjectile' = updateProjectileDirection world
+      playerScore' = playerScore world
+      opponentScore' = opponentScore world
    in if wallCollision (projectilePosition world)
-        then initialWorld
+        then initialWorld { playerScore = playerScore' + 1, opponentScore = opponentScore' + 1 }
         else
           World
             { player = clampedPlayer
@@ -127,6 +132,8 @@ updateWorld events world t =
             , opponentControl = opponentControl'
             , projectilePosition = projectilePosition world + 2 * worldProjectile'
             , projectileDirection = worldProjectile'
+            , playerScore = playerScore'
+            , opponentScore = opponentScore'
             }
 
 
@@ -154,7 +161,7 @@ drawWorld renderer world = do
   let rect = SDL.Rectangle (SDL.P position) rectangleSize
   SDL.drawRect renderer $ Just rect
 
-  drawScore renderer
+  drawScore renderer world
 
   drawOpponent renderer world
 
@@ -193,13 +200,13 @@ render renderer world = do
 clamp :: (Num a, Ord a) => V2 a -> V2 a
 clamp = liftA2 min ub . liftA2 max lb
 
-drawScore :: MonadIO m => SDL.Renderer -> m ()
-drawScore r  = do
+drawScore :: MonadIO m => SDL.Renderer -> World -> m ()
+drawScore r w = do
   SDL.Font.initialize
   font <- SDL.Font.load "fonts/OpenSans-Regular.ttf" 400
-  fontSurface <- SDL.Font.blended font white "6 - 4" 
+  fontSurface <- SDL.Font.blended font white (T.pack $ show (playerScore w) <> "   " <> show (opponentScore w))
   scoreSprite <- toTexture fontSurface
-  SDL.copyEx r scoreSprite Nothing (Just $ floor <$> C.mkRect 280 10 100 50) 0.0 Nothing (V2 False False)
+  SDL.copyEx r scoreSprite Nothing (Just $ floor <$> C.mkRect 270 10 100 50) 0.0 Nothing (V2 False False)
     where
       toTexture surface = SDL.createTextureFromSurface r surface
 
