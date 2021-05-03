@@ -107,22 +107,10 @@ updateOpponentControl event = case SDL.eventPayload event of
   _ -> id
 
 updateWorld :: [SDL.Event] -> World -> Word32 -> World
-updateWorld events world t =
-  let deltaTime = fromIntegral (t - ticksLastFrame world) / 1000
-      deltaPos = deltaTime * 200
-      playerControl' = foldl' (flip updateControl) (playerControl world) events
-      opponentControl' :: PlayerControl
-      opponentControl' = foldl' (flip updateOpponentControl) (opponentControl world) events
-      player' = player world + fmap (* deltaPos) (controlToVec playerControl')
-      opponent' = opponent world + fmap (* deltaPos) (controlToVec opponentControl')
-      clampedPlayer = clamp player'
-      clampedOpponent = clamp opponent'
-      worldProjectile' = updateProjectileDirection world
-      playerScore' = playerScore world
-      opponentScore' = opponentScore world
-   in if wallCollision (projectilePosition world)
-        then initialWorld { playerScore = playerScore' + 1, opponentScore = opponentScore' + 1 }
-        else
+updateWorld events world t
+     | leftWallCollision (projectilePosition world) = initialWorld { opponentScore = opponentScore' + 1 }
+     | rightWallCollision (projectilePosition world) = initialWorld { playerScore = playerScore' + 1 }
+     | otherwise = 
           World
             { player = clampedPlayer
             , opponent = clampedOpponent
@@ -134,11 +122,27 @@ updateWorld events world t =
             , playerScore = playerScore'
             , opponentScore = opponentScore'
             }
+              where
+                deltaTime = fromIntegral (t - ticksLastFrame world) / 1000
+                deltaPos = deltaTime * 200
+                playerControl' = foldl' (flip updateControl) (playerControl world) events
+                opponentControl' :: PlayerControl
+                opponentControl' = foldl' (flip updateOpponentControl) (opponentControl world) events
+                player' = player world + fmap (* deltaPos) (controlToVec playerControl')
+                opponent' = opponent world + fmap (* deltaPos) (controlToVec opponentControl')
+                clampedPlayer = clamp player'
+                clampedOpponent = clamp opponent'
+                worldProjectile' = updateProjectileDirection world
+                playerScore' = playerScore world
+                opponentScore' = opponentScore world
 
+rightWallCollision :: (Ord a, Num a) => V2 a -> Bool
+rightWallCollision (V2 x y) = x > (640 - projectileSizeX) 
+ where
+  (V2 projectileSizeX _) = projectileSize
 
-wallCollision :: (Ord a, Num a) => V2 a -> Bool
-wallCollision (V2 x y) =
-  x > (640 - projectileSizeX) || x < 0
+leftWallCollision :: (Ord a, Num a) => V2 a -> Bool
+leftWallCollision (V2 x y) = x < 0
  where
   (V2 projectileSizeX _) = projectileSize
 
