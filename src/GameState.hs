@@ -19,7 +19,7 @@ import Data.List (foldl')
 import Data.Word (Word32)
 import Foreign.C.Types (CInt)
 import Linear
-import qualified SDL.Font (load, solid, initialize)
+import qualified SDL.Font (load, solid, initialize, blended)
 import Common (renderSurfaceToWindow)
 import qualified Common as C
 
@@ -196,10 +196,10 @@ clamp = liftA2 min ub . liftA2 max lb
 drawScore :: MonadIO m => SDL.Renderer -> m ()
 drawScore r  = do
   SDL.Font.initialize
-  font <- SDL.Font.load "fonts/OpenSans-Regular.ttf" 20
-  fontSurface <- SDL.Font.solid font white "0 - 0" 
+  font <- SDL.Font.load "fonts/OpenSans-Regular.ttf" 400
+  fontSurface <- SDL.Font.blended font white "6 - 4" 
   scoreSprite <- toTexture fontSurface
-  SDL.copyEx r scoreSprite Nothing (Just $ floor <$> C.mkRect 280 10 60 20) 0.0 Nothing (V2 False False)
+  SDL.copyEx r scoreSprite Nothing (Just $ floor <$> C.mkRect 280 10 100 50) 0.0 Nothing (V2 False False)
     where
       toTexture surface = SDL.createTextureFromSurface r surface
 
