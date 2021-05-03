@@ -232,5 +232,4 @@ opponentCollision (V2 x y) (V2 px py) =
 
 
 -- 1. Use circle as projectile (try out other shapes in SDL2)
--- 2. Projectile should reflect only after hitting the front side of the paddle
 -- 3. Score
