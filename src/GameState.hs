@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE OverloadedStrings #-}
-
 module GameState (
   appLoop,
   initialWorld,
@@ -252,7 +251,3 @@ opponentCollision (V2 x y) (V2 px py) =
   px' = px + projectileSizeX
   (V2 playerSizeX playerSizeY) = rectangleSize
   (V2 projectileSizeX _) = projectileSize
-
-
--- 1. Use circle as projectile (try out other shapes in SDL2)
--- 3. Score
