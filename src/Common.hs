@@ -8,6 +8,7 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.Text              (Text)
 
 import SDL (($=))
+import qualified SDL.Font
 
 
 withSDL :: (MonadIO m) => m a -> m ()
@@ -23,6 +24,12 @@ withSDLImage op = do
   void op
   SDL.Image.quit
 
+
+withSDLFont :: (MonadIO m) => m a -> m ()
+withSDLFont op = do
+  SDL.Font.initialize
+  void op
+  SDL.Font.quit
 
 withWindow :: (MonadIO m) => Text -> (Int, Int) -> (SDL.Window -> m a) -> m ()
 withWindow title (x, y) op = do
