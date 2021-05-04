@@ -213,6 +213,7 @@ drawScore font r w = do
   fontSurface <- SDL.Font.blended font white (T.pack $ show (playerScore w) <> "   " <> show (opponentScore w))
   scoreSprite <- toTexture fontSurface
   SDL.copyEx r scoreSprite Nothing (Just $ floor <$> C.mkRect 270 10 100 50) 0.0 Nothing (V2 False False)
+  SDL.destroyTexture scoreSprite
     where
       toTexture surface = SDL.createTextureFromSurface r surface
 
