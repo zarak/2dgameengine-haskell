@@ -24,6 +24,7 @@ library
                     , GameState
                     , Renderer
                     , State
+                    , Server
 
     -- Modules included in this library but not exported.
     other-modules:    Constants
@@ -40,6 +41,10 @@ library
                     , sdl2-gfx
                     , wai
                     , wai-websockets
+                    , bytestring
+                    , text
+                    , network
+                    , safe-exceptions
     hs-source-dirs:   src
     default-language: Haskell2010
 
