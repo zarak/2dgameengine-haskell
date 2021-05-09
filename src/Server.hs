@@ -1,6 +1,7 @@
 module Server
   ( runConn
   , main
+  , pos
   ) where
 
 import Control.Monad (unless)
@@ -8,6 +9,8 @@ import qualified Network.Socket as S
 import Control.Exception.Safe (bracket)
 import qualified Data.ByteString as BS
 import System.IO
+
+pos = [(0, 0), (100, 100)]
 
 forChunks_ ::
   IO chunk
