@@ -2,7 +2,7 @@
 module Main where
 
 import qualified Common                 as C
-import GameState (appLoop, initialWorld)
+import Runner (appLoop, initialWorld)
 import           Data.IORef
 import qualified SDL.Font
 

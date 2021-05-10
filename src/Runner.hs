@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE OverloadedStrings #-}
-module GameState (
+module Runner (
   appLoop,
   initialWorld,
   clamp,
