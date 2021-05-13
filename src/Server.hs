@@ -13,6 +13,7 @@ import qualified Network.Socket.ByteString.Lazy as SocketLBS
 import System.IO
 import qualified Data.Text.Encoding as T
 import qualified Data.Text as T
+import qualified Data.Text.Read as T
 
 pos = [(0, 0), (100, 100)]
 
@@ -53,6 +54,10 @@ mainLoop sock = do
 runConn :: (S.Socket, S.SockAddr) -> IO ()
 runConn (sock, addr) = do
   msg <- SocketBS.recv sock 1024
+  let clientPos = T.double $ T.decodeUtf8 msg
+  case clientPos of
+    Left e -> print $ "Invalid position" <> e
+    Right d -> print $ "Received position " <> show d
   unless (BS.null msg) $ do
     SocketBS.sendAll sock $ T.encodeUtf8 $ T.pack $ show $ head pos
     runConn (sock, addr)
