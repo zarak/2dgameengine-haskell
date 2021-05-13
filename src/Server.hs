@@ -1,13 +1,15 @@
 module Server
   ( runConn
-  , main
   , pos
+  , main
   ) where
 
 import Control.Monad (unless)
 import qualified Network.Socket as S
 import Control.Exception.Safe (bracket)
 import qualified Data.ByteString as BS
+import qualified Network.Socket.ByteString.Lazy as SocketLBS
+import qualified Network.Socket.ByteString as SocketBS
 import System.IO
 
 pos = [(0, 0), (100, 100)]
@@ -35,8 +37,7 @@ main :: IO ()
 main = withSocket S.AF_INET S.Stream 0 $ \sock -> do
     S.setSocketOption sock S.ReuseAddr 1
     let hints = S.defaultHints { S.addrFlags = [S.AI_NUMERICHOST, S.AI_NUMERICSERV], S.addrSocketType = S.Stream }
-    -- addr:_ <- S.getAddrInfo (Just hints) (Just "192.168.100.23") (Just "5000")
-    addr:_ <- S.getAddrInfo (Just hints) Nothing (Just "5000")
+    addr:_ <- S.getAddrInfo (Just hints) (Just "192.168.100.23") (Just "5000")
     S.bind sock (S.addrAddress addr)
     S.listen sock 2
     mainLoop sock
@@ -48,8 +49,8 @@ mainLoop sock = do
   mainLoop sock
 
 runConn :: (S.Socket, S.SockAddr) -> IO ()
-runConn (sock, _) = do
-  h <- S.socketToHandle sock ReadWriteMode
-  hSetBuffering h NoBuffering
-  hPutStrLn h "Hello!"
-  hClose h
+runConn (sock, addr) = do
+  msg <- SocketBS.recv sock 1024
+  unless (BS.null msg) $ do
+    SocketBS.sendAll sock msg
+    runConn (sock, addr)
