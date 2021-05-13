@@ -18,6 +18,7 @@ import qualified Network.Socket.ByteString as SocketBS
 import qualified Network.Socket.ByteString.Lazy as SocketLBS
 import System.IO
 import Control.Concurrent (forkIO)
+import Constants
 
 pos = [(0, 0), (100, 100)]
 
@@ -52,7 +53,7 @@ main :: IO ()
 main = withSocket S.AF_INET S.Stream 0 $ \sock -> do
   S.setSocketOption sock S.ReuseAddr 1
   let hints = S.defaultHints{S.addrFlags = [S.AI_NUMERICHOST, S.AI_NUMERICSERV], S.addrSocketType = S.Stream}
-  addr : _ <- S.getAddrInfo (Just hints) (Just "192.168.100.23") (Just "5000")
+  addr : _ <- S.getAddrInfo (Just hints) (Just localIP) (Just "5000")
   S.bind sock (S.addrAddress addr)
   S.listen sock 2
   mainLoop sock

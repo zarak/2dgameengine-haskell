@@ -35,3 +35,6 @@ green = V4 0 255 0 0
 
 white :: SDL.Font.Color
 white = V4 255 255 255 0
+
+localIP :: String
+localIP = "192.168.100.23"
