@@ -17,6 +17,7 @@ import qualified Network.Socket as S
 import qualified Network.Socket.ByteString as SocketBS
 import qualified Network.Socket.ByteString.Lazy as SocketLBS
 import System.IO
+import Control.Concurrent (forkIO)
 
 pos = [(0, 0), (100, 100)]
 
@@ -59,16 +60,21 @@ main = withSocket S.AF_INET S.Stream 0 $ \sock -> do
 mainLoop :: S.Socket -> IO ()
 mainLoop sock = do
   conn <- S.accept sock
-  runConn conn
+  forkIO $ runConn conn
   mainLoop sock
 
 runConn :: (S.Socket, S.SockAddr) -> IO ()
 runConn (sock, addr) = do
   msg <- SocketBS.recv sock 1024
   let clientPos = maybeResult $ parse coordinateParser $ T.decodeUtf8 msg
-  case clientPos of
-    Nothing -> print "Invalid position"
-    Just p -> print $ "Received position " <> show p
   unless (BS.null msg) $ do
-    SocketBS.sendAll sock $ T.encodeUtf8 $ T.pack $ show $ head pos
+    -- SocketBS.sendAll sock $ T.encodeUtf8 $ T.pack $ show $ head pos
+    case clientPos of
+      Nothing -> do
+        print "Invalid position"
+        SocketBS.sendAll sock $ T.encodeUtf8 $ T.pack "Invalid position\n"
+      Just p -> do
+        let res = "Received position " <> show p <> "\n"
+        print res
+        SocketBS.sendAll sock $ T.encodeUtf8 $ T.pack res
     runConn (sock, addr)
