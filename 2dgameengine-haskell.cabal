@@ -25,6 +25,7 @@ library
                     , Renderer
                     , State
                     , Server
+                    , Physics
 
     -- Modules included in this library but not exported.
     other-modules:    Constants
