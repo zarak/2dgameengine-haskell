@@ -69,7 +69,6 @@ runConn (sock, addr) = do
   msg <- SocketBS.recv sock 1024
   let clientPos = maybeResult $ parse coordinateParser $ T.decodeUtf8 msg
   unless (BS.null msg) $ do
-    -- SocketBS.sendAll sock $ T.encodeUtf8 $ T.pack $ show $ head pos
     case clientPos of
       Nothing -> do
         print "Invalid position"
