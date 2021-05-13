@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Server (
   runConn,
   pos,
@@ -6,14 +7,16 @@ module Server (
 
 import Control.Exception.Safe (bracket)
 import Control.Monad (unless)
+import Data.Attoparsec.Text
 import qualified Data.ByteString as BS
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
+import qualified Data.Text.Read as T
 import qualified Network.Socket as S
 import qualified Network.Socket.ByteString as SocketBS
 import qualified Network.Socket.ByteString.Lazy as SocketLBS
 import System.IO
-import qualified Data.Text.Encoding as T
-import qualified Data.Text as T
-import qualified Data.Text.Read as T
 
 pos = [(0, 0), (100, 100)]
 
@@ -29,6 +32,14 @@ forChunks_ getChunk isEnd f = continue
     unless (isEnd chunk) $ do
       _ <- f chunk
       continue
+
+coordinateParser :: Parser (Double, Double)
+coordinateParser  = do
+  string "("
+  x <- double 
+  string ","
+  y <- double
+  pure (x, y)
 
 withSocket :: S.Family -> S.SocketType -> S.ProtocolNumber -> (S.Socket -> IO a) -> IO a
 withSocket addrFamily socketType protocol = bracket open close
@@ -54,10 +65,10 @@ mainLoop sock = do
 runConn :: (S.Socket, S.SockAddr) -> IO ()
 runConn (sock, addr) = do
   msg <- SocketBS.recv sock 1024
-  let clientPos = T.double $ T.decodeUtf8 msg
+  let clientPos = maybeResult $ parse coordinateParser $ T.decodeUtf8 msg
   case clientPos of
-    Left e -> print $ "Invalid position" <> e
-    Right d -> print $ "Received position " <> show d
+    Nothing -> print "Invalid position"
+    Just p -> print $ "Received position " <> show p
   unless (BS.null msg) $ do
     SocketBS.sendAll sock $ T.encodeUtf8 $ T.pack $ show $ head pos
     runConn (sock, addr)
