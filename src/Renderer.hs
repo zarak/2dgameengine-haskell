@@ -22,6 +22,7 @@ drawScore font r w = do
   scoreSprite <- toTexture fontSurface
   SDL.copyEx r scoreSprite Nothing (Just $ floor <$> C.mkRect 270 10 100 50) 0.0 Nothing (V2 False False)
   SDL.destroyTexture scoreSprite
+  SDL.freeSurface fontSurface
     where
       toTexture surface = SDL.createTextureFromSurface r surface
 
