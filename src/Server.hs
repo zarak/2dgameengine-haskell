@@ -1,8 +1,6 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Server (
-  runConn,
-  pos,
-  main,
 ) where
 
 import Control.Exception.Safe (bracket)
@@ -19,62 +17,20 @@ import qualified Network.Socket.ByteString.Lazy as SocketLBS
 import System.IO
 import Control.Concurrent (forkIO)
 import Constants
+import Data.Serialize
+import GHC.Generics
+import qualified Network.WebSockets as WS
 
-pos = [(0, 0), (100, 100)]
+data MyData = Foo Int | Bar String
+  deriving (Generic)
 
-forChunks_ ::
-  IO chunk ->
-  (chunk -> Bool) ->
-  (chunk -> IO x) ->
-  IO ()
-forChunks_ getChunk isEnd f = continue
- where
-  continue = do
-    chunk <- getChunk
-    unless (isEnd chunk) $ do
-      _ <- f chunk
-      continue
+instance Serialize MyData
 
-coordinateParser :: Parser (Double, Double)
-coordinateParser  = do
-  string "("
-  x <- double 
-  string ","
-  y <- double
-  pure (x, y)
+-- Now use encode, decode to serialize/deserialize from Bytestrings
+--
+type Client = (Text, WS.Connection)
+--
+newServerState :: [Client]
+newServerState = []
 
-withSocket :: S.Family -> S.SocketType -> S.ProtocolNumber -> (S.Socket -> IO a) -> IO a
-withSocket addrFamily socketType protocol = bracket open close
- where
-  open = S.socket addrFamily socketType protocol
-  close s = S.gracefulClose s 1000
-
-main :: IO ()
-main = withSocket S.AF_INET S.Stream 0 $ \sock -> do
-  S.setSocketOption sock S.ReuseAddr 1
-  let hints = S.defaultHints{S.addrFlags = [S.AI_NUMERICHOST, S.AI_NUMERICSERV], S.addrSocketType = S.Stream}
-  addr : _ <- S.getAddrInfo (Just hints) (Just localIP) (Just "5000")
-  S.bind sock (S.addrAddress addr)
-  S.listen sock 2
-  mainLoop sock
-
-mainLoop :: S.Socket -> IO ()
-mainLoop sock = do
-  conn <- S.accept sock
-  forkIO $ runConn conn
-  mainLoop sock
-
-runConn :: (S.Socket, S.SockAddr) -> IO ()
-runConn (sock, addr) = do
-  msg <- SocketBS.recv sock 1024
-  let clientPos = maybeResult $ parse coordinateParser $ T.decodeUtf8 msg
-  unless (BS.null msg) $ do
-    case clientPos of
-      Nothing -> do
-        print "Invalid position"
-        SocketBS.sendAll sock $ T.encodeUtf8 $ T.pack "Invalid position\n"
-      Just p -> do
-        let res = "Received position " <> show p <> "\n"
-        print res
-        SocketBS.sendAll sock $ T.encodeUtf8 $ T.pack res
-    runConn (sock, addr)
+-- Network.Websockets.ServerApp

@@ -42,6 +42,8 @@ library
                     , sdl2-gfx
                     , wai
                     , wai-websockets
+                    , websockets
+                    , cereal
                     , bytestring
                     , text
                     , network
